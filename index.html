@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kamakshi Prabhuajgaonkar — Unity Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#161618;
+    --bg-1:#1e1e20;
+    --bg-2:#27272a;
+    --bg-3:#2f2f33;
+    --line:#3a3a3f;
+    --line-soft:#2c2c30;
+    --ink:#e8e6e1;
+    --ink-dim:#9a9aa0;
+    --ink-faint:#6b6b70;
+    --accent:#4fd6ff;
+    --accent-dim:#2c5d6e;
+    --coral:#ff6b57;
+    --coral-dim:#5e3329;
+    --ok:#7ee787;
+    --radius:6px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg-0);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--accent);color:#0a0a0a;}
+
+  a{color:inherit;text-decoration:none;}
+
+  /* ---------- Editor chrome ---------- */
+  .editor-frame{
+    border:1px solid var(--line);
+    margin:14px;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--bg-1);
+    min-height:calc(100vh - 28px);
+  }
+  .titlebar{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:9px 16px;
+    background:var(--bg-2);
+    border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-faint);
+  }
+  .dots{display:flex;gap:6px;margin-right:8px;}
+  .dots span{width:9px;height:9px;border-radius:50%;display:block;}
+  .dots span:nth-child(1){background:#ff5f57;}
+  .dots span:nth-child(2){background:#febc2e;}
+  .dots span:nth-child(3){background:#28c840;}
+  .menu-items{display:flex;gap:16px;}
+  .menu-items span{cursor:default;}
+  .menu-items span.active{color:var(--accent);}
+  .titlebar .proj-path{margin-left:auto;color:var(--ink-faint);}
+  .titlebar .proj-path b{color:var(--ink-dim);font-weight:500;}
+
+  .editor-body{
+    display:grid;
+    grid-template-columns:230px 1fr;
+    min-height:calc(100vh - 28px - 38px);
+  }
+
+  /* ---------- Hierarchy rail ---------- */
+  .hierarchy{
+    background:var(--bg-1);
+    border-right:1px solid var(--line);
+    padding:18px 0;
+    position:sticky;
+    top:0;
+    align-self:start;
+    height:calc(100vh - 28px - 38px);
+  }
+  .hierarchy-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:.12em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    padding:0 16px 10px;
+    border-bottom:1px solid var(--line-soft);
+    margin-bottom:6px;
+  }
+  .hnode{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 16px 7px 20px;
+    font-size:12.5px;
+    color:var(--ink-dim);
+    cursor:pointer;
+    border-left:2px solid transparent;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .hnode:hover{background:var(--bg-2);color:var(--ink);}
+  .hnode.is-active{
+    background:var(--bg-2);
+    color:var(--accent);
+    border-left-color:var(--accent);
+  }
+  .hnode .ico{
+    width:7px;height:7px;
+    border-radius:1px;
+    background:var(--ink-faint);
+    flex-shrink:0;
+  }
+  .hnode.is-active .ico{background:var(--accent);}
+  .hierarchy-child{padding-left:34px;font-size:11.5px;color:var(--ink-faint);}
+  .hierarchy-child .ico{width:5px;height:5px;}
+
+  .hierarchy-foot{
+    margin-top:auto;
+    padding:14px 16px 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ink-faint);
+  }
+  @media (max-width:880px){
+    .editor-body{grid-template-columns:1fr;}
+    .hierarchy{display:none;}
+  }
+
+  /* ---------- Main scene/content ---------- */
+  main{padding:0;}
+  section{padding:90px 56px;border-bottom:1px solid var(--line-soft);position:relative;}
+  @media (max-width:700px){section{padding:60px 22px;}}
+
+  .section-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .section-tag::before{content:'▸';color:var(--ink-faint);}
+
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    min-height:calc(100vh - 28px - 38px);
+    display:flex;
+    align-items:center;
+    padding:0 56px;
+    position:relative;
+    overflow:hidden;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .scene-grid{
+    position:absolute;
+    inset:0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:42px 42px;
+    mask-image:radial-gradient(ellipse 75% 75% at 60% 50%, black 30%, transparent 75%);
+    opacity:.8;
+  }
+  .gizmo{
+    position:absolute;
+    right:8%;
+    top:50%;
+    width:260px;
+    height:260px;
+    transform:translateY(-50%);
+    pointer-events:none;
+  }
+  @media (max-width:880px){.gizmo{display:none;}}
+
+  .hero-inner{position:relative;z-index:2;max-width:760px;}
+  .hero-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-dim);
+    letter-spacing:.08em;
+    margin-bottom:22px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .hero-eyebrow .pulse{
+    width:7px;height:7px;border-radius:50%;background:var(--ok);
+    box-shadow:0 0 0 0 rgba(126,231,135,.6);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(126,231,135,.5);}
+    70%{box-shadow:0 0 0 7px rgba(126,231,135,0);}
+    100%{box-shadow:0 0 0 0 rgba(126,231,135,0);}
+  }
+  h1.name{
+    font-size:clamp(40px,6vw,68px);
+    font-weight:600;
+    line-height:1.04;
+    letter-spacing:-.01em;
+    margin-bottom:8px;
+  }
+  h1.name .last{color:var(--ink-faint);font-weight:400;}
+  .role-line{
+    font-size:clamp(17px,2.2vw,22px);
+    color:var(--accent);
+    font-family:'JetBrains Mono',monospace;
+    margin-bottom:26px;
+  }
+  .hero-desc{
+    font-size:16px;
+    color:var(--ink-dim);
+    line-height:1.7;
+    max-width:560px;
+    margin-bottom:34px;
+  }
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:40px;}
+  .btn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    padding:11px 20px;
+    border-radius:5px;
+    border:1px solid var(--line);
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition:border-color .2s, background .2s, color .2s;
+  }
+  .btn-primary{background:var(--accent);color:#0a1216;border-color:var(--accent);font-weight:600;}
+  .btn-primary:hover{background:#73e1ff;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+  .stat-row{display:flex;gap:34px;flex-wrap:wrap;}
+  .stat{font-family:'JetBrains Mono',monospace;}
+  .stat .v{font-size:22px;color:var(--ink);font-weight:600;}
+  .stat .l{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em;}
+
+  /* ---------- About / inspector card ---------- */
+  .inspector{
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .inspector-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:11px 16px;
+    background:var(--bg-3);
+    border-bottom:1px solid var(--line);
+  }
+  .inspector-head .title{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-dim);
+    display:flex;align-items:center;gap:8px;
+  }
+  .inspector-head .chk{width:12px;height:12px;border:1px solid var(--ink-faint);border-radius:2px;}
+  .inspector-body{padding:20px 18px;}
+
+  .about-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:start;}
+  @media (max-width:880px){.about-grid{grid-template-columns:1fr;}}
+  .about-body p{color:var(--ink-dim);line-height:1.8;font-size:15px;margin-bottom:16px;}
+
+  .field-row{
+    display:grid;
+    grid-template-columns:104px 1fr;
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px solid var(--line-soft);
+    font-size:13px;
+  }
+  .field-row:last-child{border-bottom:none;}
+  .field-label{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--ink-faint);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    padding-top:2px;
+  }
+  .field-val{color:var(--ink);line-height:1.6;}
+  .field-val a:hover{color:var(--accent);}
+
+  .skill-chip-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .chip{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    padding:6px 11px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--ink-dim);
+    background:var(--bg-1);
+  }
+  .chip.accent{border-color:var(--accent-dim);color:var(--accent);}
+
+  /* ---------- Projects ---------- */
+  .proj-list{display:flex;flex-direction:column;gap:22px;}
+  .proj-card{
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    transition:border-color .2s, transform .2s;
+  }
+  .proj-card:hover{border-color:var(--accent-dim);}
+  .proj-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:14px 18px;
+    background:var(--bg-3);
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .proj-head .name{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:18px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .proj-head .name .dim{color:var(--ink-faint);font-weight:400;font-size:13px;font-family:'JetBrains Mono',monospace;}
+  .platform-tags{display:flex;gap:6px;flex-wrap:wrap;}
+  .ptag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    padding:4px 8px;
+    border-radius:3px;
+    background:var(--bg-1);
+    border:1px solid var(--line);
+    color:var(--ink-faint);
+  }
+  .proj-content{
+    display:grid;
+    grid-template-columns:1fr 280px;
+    gap:0;
+  }
+  @media (max-width:780px){.proj-content{grid-template-columns:1fr;}}
+
+  .proj-main{padding:20px 18px;}
+  .proj-main p{color:var(--ink-dim);font-size:14.5px;line-height:1.75;margin-bottom:14px;}
+  .proj-main ul{padding-left:0;list-style:none;}
+  .proj-main ul li{
+    color:var(--ink-dim);
+    font-size:14px;
+    line-height:1.7;
+    padding-left:18px;
+    position:relative;
+    margin-bottom:8px;
+  }
+  .proj-main ul li::before{
+    content:'';
+    position:absolute;
+    left:0;top:9px;
+    width:6px;height:6px;
+    background:var(--accent);
+    opacity:.6;
+    border-radius:1px;
+  }
+
+  .proj-meta{
+    border-left:1px solid var(--line);
+    padding:20px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    background:var(--bg-1);
+  }
+  @media (max-width:780px){.proj-meta{border-left:none;border-top:1px solid var(--line);}}
+  .meta-block .field-label{margin-bottom:6px;display:block;}
+  .meta-block .field-val{font-size:13px;}
+  .tech-tags{display:flex;flex-wrap:wrap;gap:6px;}
+
+  .viewport-thumb{
+    aspect-ratio:16/10;
+    border-radius:4px;
+    border:1px solid var(--line);
+    background:
+      linear-gradient(var(--line-soft) 1px, transparent 1px) 0 0/14px 14px,
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px) 0 0/14px 14px,
+      var(--bg-1);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:4px;
+    position:relative;
+    overflow:hidden;
+  }
+  .viewport-thumb svg{width:60%;height:60%;opacity:.85;}
+  .viewport-thumb .corner{
+    position:absolute;width:10px;height:10px;
+    border-color:var(--ink-faint);
+    z-index:3;
+  }
+  .corner.tl{top:6px;left:6px;border-top:1px solid;border-left:1px solid;}
+  .corner.br{bottom:6px;right:6px;border-bottom:1px solid;border-right:1px solid;}
+
+  .viewport-video, .viewport-image{padding:0;cursor:pointer;}
+  .viewport-image img{
+    width:100%;height:100%;object-fit:cover;display:block;
+  }
+  .proj-video{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+    opacity:0;
+    transition:opacity .25s ease;
+    background:var(--bg-1);
+  }
+  .proj-video.is-active{opacity:1;}
+
+  .rec-badge{
+    position:absolute;top:6px;left:50%;
+    transform:translateX(-50%);
+    z-index:3;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:.06em;
+    color:var(--ink-dim);
+    background:rgba(20,20,22,.78);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:3px 8px;
+    display:flex;align-items:center;gap:5px;
+  }
+  .rec-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--coral);
+    animation:pulse 1.6s infinite;
+  }
+  .rec-dot.static{animation:none;background:var(--accent);}
+
+  .play-toggle{
+    position:absolute;
+    bottom:8px;right:8px;
+    z-index:4;
+    width:30px;height:30px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:rgba(20,20,22,.78);
+    color:var(--ink);
+    font-size:11px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:border-color .2s, color .2s;
+  }
+  .play-toggle:hover{border-color:var(--accent);color:var(--accent);}
+  .play-toggle.is-playing::before{content:'❚❚';font-size:9px;letter-spacing:1px;}
+  .play-toggle:not(.is-playing)::before{content:'▶';font-size:10px;}
+
+  .clip-switch{display:flex;gap:6px;margin:-2px 0 2px;}
+  .clip-btn{
+    flex:1;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    padding:6px 0;
+    border-radius:3px;
+    border:1px solid var(--line);
+    background:var(--bg-1);
+    color:var(--ink-faint);
+    cursor:pointer;
+    transition:border-color .2s, color .2s, background .2s;
+  }
+  .clip-btn:hover{color:var(--ink-dim);}
+  .clip-btn.is-active{
+    border-color:var(--accent-dim);
+    color:var(--accent);
+    background:var(--bg-2);
+  }
+
+  /* ---------- Achievements ---------- */
+  .ach-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media (max-width:700px){.ach-grid{grid-template-columns:1fr;}}
+  .ach-card{
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 18px 18px 16px;
+    display:flex;
+    gap:14px;
+  }
+  .ach-icon{
+    width:34px;height:34px;
+    border-radius:4px;
+    background:var(--coral-dim);
+    color:var(--coral);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    font-weight:600;
+  }
+  .ach-card h4{font-size:14.5px;font-weight:600;margin-bottom:5px;}
+  .ach-card p{font-size:13px;color:var(--ink-faint);line-height:1.6;}
+
+  /* ---------- Timeline (experience) ---------- */
+  .timeline{position:relative;padding-left:28px;}
+  .timeline::before{
+    content:'';
+    position:absolute;left:5px;top:6px;bottom:6px;
+    width:1px;background:var(--line);
+  }
+  .tl-item{position:relative;padding-bottom:30px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-dot{
+    position:absolute;left:-28px;top:4px;
+    width:11px;height:11px;border-radius:50%;
+    background:var(--bg-1);border:2px solid var(--accent);
+  }
+  .tl-item .role{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;}
+  .tl-item .org{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:12.5px;margin:3px 0 10px;}
+  .tl-item ul{list-style:none;padding-left:0;}
+  .tl-item ul li{
+    color:var(--ink-dim);font-size:14px;line-height:1.7;
+    padding-left:18px;position:relative;margin-bottom:7px;
+  }
+  .tl-item ul li::before{
+    content:'';position:absolute;left:0;top:9px;
+    width:6px;height:6px;background:var(--accent);opacity:.6;border-radius:1px;
+  }
+
+  /* ---------- Contact / footer ---------- */
+  .contact-section{padding-bottom:70px;}
+  .contact-card{
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:40px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:30px;
+    flex-wrap:wrap;
+  }
+  .contact-card h2{font-size:28px;margin-bottom:8px;}
+  .contact-card p{color:var(--ink-dim);font-size:15px;max-width:420px;}
+  .contact-actions{display:flex;gap:12px;flex-wrap:wrap;}
+
+  footer{
+    padding:20px 56px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    display:flex;
+    justify-content:space-between;
+    border-top:1px solid var(--line-soft);
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  @media (max-width:700px){footer{padding:18px 22px;}}
+
+  .reveal{opacity:1;transform:none;transition:opacity .6s ease, transform .6s ease;}
+  .reveal.pre-anim{opacity:0;transform:translateY(16px);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<div class="editor-frame">
+
+  <div class="titlebar">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="menu-items">
+      <span class="active">Portfolio.unity</span>
+      <span>Edit</span><span>Assets</span><span>GameObject</span><span>Window</span>
+    </div>
+    <div class="proj-path">Assets / <b>Kamakshi_Prabhuajgaonkar</b> / Portfolio.scene</div>
+  </div>
+
+  <div class="editor-body">
+
+    <!-- HIERARCHY -->
+    <nav class="hierarchy">
+      <div class="hierarchy-label">Hierarchy</div>
+      <a class="hnode is-active" href="#hero"><span class="ico"></span>Main Camera</a>
+      <a class="hnode" href="#about"><span class="ico"></span>About_Me</a>
+      <a class="hnode" href="#projects"><span class="ico"></span>Projects</a>
+      <div class="hierarchy-child">SUK_AR_Learning</div>
+      <div class="hierarchy-child">Grace_Digital</div>
+      <div class="hierarchy-child">Ignite_Gaming</div>
+      <a class="hnode" href="#experience"><span class="ico"></span>Experience</a>
+      <a class="hnode" href="#achievements"><span class="ico"></span>Achievements</a>
+      <a class="hnode" href="#contact"><span class="ico"></span>Contact</a>
+      <div class="hierarchy-foot">// 8 GameObjects<br>// Scene saved</div>
+    </nav>
+
+    <!-- MAIN -->
+    <main>
+
+      <!-- HERO -->
+      <section class="hero" id="hero">
+        <div class="scene-grid"></div>
+        <svg class="gizmo" viewBox="0 0 260 260" id="gizmoSvg">
+          <g id="cubeGroup" stroke="#4fd6ff" stroke-width="1.4" fill="none" opacity="0.85">
+            <polygon points="130,40 200,80 200,160 130,200 60,160 60,80" stroke="#3a3a3f"/>
+            <line x1="130" y1="40" x2="130" y2="120"/>
+            <line x1="60" y1="80" x2="130" y2="120"/>
+            <line x1="200" y1="80" x2="130" y2="120"/>
+            <line x1="130" y1="120" x2="130" y2="200"/>
+            <line x1="60" y1="160" x2="130" y2="120"/>
+            <line x1="200" y1="160" x2="130" y2="120"/>
+            <circle cx="130" cy="120" r="3.5" fill="#4fd6ff" stroke="none"/>
+          </g>
+        </svg>
+
+        <div class="hero-inner">
+          <div class="hero-eyebrow"><span class="pulse"></span>AVAILABLE FOR WORK — PUNE, MAHARASHTRA</div>
+          <h1 class="name">Kamakshi<br><span class="last">Prabhuajgaonkar</span></h1>
+          <div class="role-line">&lt;UnityDeveloper&gt; 2D · 3D · AR</div>
+          <p class="hero-desc">3+ years building interactive learning games and AR experiences in Unity — from classroom-ready AR modules used by thousands of students to high-performance Android builds shipped under tight deadlines.</p>
+          <div class="hero-ctas">
+            <a class="btn btn-primary" href="#projects">View Projects ▸</a>
+            <a class="btn btn-ghost" href="#contact">Get In Touch</a>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><div class="v">3+ yrs</div><div class="l">Experience</div></div>
+            <div class="stat"><div class="v">500+</div><div class="l">Students Reached</div></div>
+            <div class="stat"><div class="v">4</div><div class="l">Platforms Shipped</div></div>
+            <div class="stat"><div class="v">20%</div><div class="l">Faster Dev Cycles</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about">
+        <div class="section-tag">About_Me.cs</div>
+        <div class="inspector reveal">
+          <div class="inspector-head">
+            <div class="title"><span class="chk"></span>Inspector — Developer Profile</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);">Static</span>
+          </div>
+          <div class="inspector-body">
+            <div class="about-grid">
+              <div class="about-body">
+                <p>Passionate Unity developer with more than three years of experience creating interactive 2D and 3D content. Skilled in C# scripting, animation, UI/UX design, and AR development, with a strong record of shipping education-focused apps across Android, iOS, PC, and WebGL.</p>
+                <p>Comfortable in fast-paced, collaborative environments — experienced with Git and Plastic SCM, cross-functional teamwork, and writing reusable code that speeds up feature delivery without compromising performance.</p>
+                <div class="skill-chip-wrap">
+                  <span class="chip accent">Unity (2D/3D)</span>
+                  <span class="chip accent">AR Foundation</span>
+                  <span class="chip">C#</span>
+                  <span class="chip">UI/UX Development</span>
+                  <span class="chip">Asset Optimization</span>
+                  <span class="chip">Git &amp; Plastic SCM</span>
+                  <span class="chip">Java</span>
+                  <span class="chip">C</span>
+                </div>
+              </div>
+              <div class="about-fields">
+                <div class="field-row"><div class="field-label">Role</div><div class="field-val">Unity Developer</div></div>
+                <div class="field-row"><div class="field-label">Location</div><div class="field-val">Pune, Maharashtra</div></div>
+                <div class="field-row"><div class="field-label">Education</div><div class="field-val">BE Computer Engineering<br><span style="color:var(--ink-faint);font-size:12px;">Mumbai University, 2019–2022</span></div></div>
+                <div class="field-row"><div class="field-label">Diploma</div><div class="field-val">Computer Engineering<br><span style="color:var(--ink-faint);font-size:12px;">MSBTE, 2016–2019</span></div></div>
+                <div class="field-row"><div class="field-label">Email</div><div class="field-val"><a href="mailto:kamakshiprabhu24@gmail.com">kamakshiprabhu24@gmail.com</a></div></div>
+                <div class="field-row"><div class="field-label">Phone</div><div class="field-val"><a href="tel:+918806350147">+91 88063 50147</a></div></div>
+                <div class="field-row"><div class="field-label">LinkedIn</div><div class="field-val"><a href="https://www.linkedin.com/in/kamakshiprabhu/" target="_blank" rel="noopener">linkedin.com/in/kamakshiprabhu</a></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="projects">
+        <div class="section-tag">Projects/ — 3 GameObjects</div>
+
+        <div class="proj-list">
+
+          <!-- Project 1 -->
+          <div class="proj-card reveal">
+            <div class="proj-head">
+              <div class="name">Shivaji University (SUK) <span class="dim">// 3D + AR Learning App</span></div>
+              <div class="platform-tags">
+                <span class="ptag">Android</span><span class="ptag">iOS</span><span class="ptag">PC</span><span class="ptag">WebGL</span>
+              </div>
+            </div>
+            <div class="proj-content">
+              <div class="proj-main">
+                <p>A 3D/AR-based learning app built for 8th–12th grade and engineering students, covering Physics, Chemistry, and Biology. Designed to turn abstract textbook concepts into something students could see, rotate, and measure in real space.</p>
+                <ul>
+                  <li>Designed interactive 3D animations and AR measurement modules to simplify complex scientific concepts.</li>
+                  <li>Built and optimized for performance across four platforms — Android, iOS, PC, and WebGL.</li>
+                  <li>Improved student retention and learning experience through hands-on, visual exploration of curriculum topics.</li>
+                </ul>
+              </div>
+              <div class="proj-meta">
+                <div class="viewport-thumb viewport-video" id="sukViewport">
+                  <span class="corner tl"></span><span class="corner br"></span>
+                  <span class="rec-badge"><span class="rec-dot"></span>AR PREVIEW</span>
+                  <video id="sukVid0" class="proj-video is-active" src="media/suk-ar.mp4" muted loop playsinline preload="metadata"></video>
+                  <video id="sukVid1" class="proj-video" src="media/suk-ar2.mp4" muted loop playsinline preload="metadata"></video>
+                  <button class="play-toggle" id="sukPlayToggle" aria-label="Play preview"></button>
+                </div>
+                <div class="clip-switch" role="tablist" aria-label="AR demo clip">
+                  <button class="clip-btn is-active" data-target="sukVid0" data-sibling="sukVid1">Clip 1</button>
+                  <button class="clip-btn" data-target="sukVid1" data-sibling="sukVid0">Clip 2</button>
+                </div>
+                <div class="meta-block">
+                  <span class="field-label">Tech Stack</span>
+                  <div class="tech-tags">
+                    <span class="chip">Unity</span><span class="chip">C#</span><span class="chip">AR Foundation</span>
+                  </div>
+                </div>
+                <div class="meta-block">
+                  <span class="field-label">Focus</span>
+                  <div class="field-val">Physics · Chemistry · Biology</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 2 -->
+          <div class="proj-card reveal">
+            <div class="proj-head">
+              <div class="name">Grace — Digital Learning <span class="dim">// Early-Childhood E-Learning</span></div>
+              <div class="platform-tags">
+                <span class="ptag">Android</span>
+              </div>
+            </div>
+            <div class="proj-content">
+              <div class="proj-main">
+                <p>An interactive e-learning application designed to make education engaging and accessible for young children. Built around fun activities, colorful visuals, and age-appropriate content to keep early learners curious and motivated.</p>
+                <ul>
+                  <li>Crafted child-friendly UI flows and visual feedback suited to early-childhood attention spans.</li>
+                  <li>Balanced playful interactivity with structured learning activities for an Android-first audience.</li>
+                </ul>
+              </div>
+              <div class="proj-meta">
+                <div class="viewport-thumb viewport-video" id="graceViewport">
+                  <span class="corner tl"></span><span class="corner br"></span>
+                  <span class="rec-badge"><span class="rec-dot"></span>APP PREVIEW</span>
+                  <video id="graceVid" class="proj-video is-active" src="media/grace.mp4" muted loop playsinline preload="metadata"></video>
+                  <button class="play-toggle" id="gracePlayToggle" aria-label="Play preview"></button>
+                </div>
+                <div class="meta-block">
+                  <span class="field-label">Tech Stack</span>
+                  <div class="tech-tags">
+                    <span class="chip">Unity</span><span class="chip">C#</span><span class="chip">UI/UX</span>
+                  </div>
+                </div>
+                <div class="meta-block">
+                  <span class="field-label">Audience</span>
+                  <div class="field-val">Young children</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 3 -->
+          <div class="proj-card reveal">
+            <div class="proj-head">
+              <div class="name">Ignite by Hatch <span class="dim">// Gaming Module, EdTech</span></div>
+              <div class="platform-tags">
+                <span class="ptag">Android</span><span class="ptag">iOS</span><span class="ptag">PC</span><span class="ptag">WebGL</span>
+              </div>
+            </div>
+            <div class="proj-content">
+              <div class="proj-main">
+                <p>Contributed to the gaming module of a global EdTech platform used by learners worldwide, focused on rapid experimentation with next-generation interactive features.</p>
+                <ul>
+                  <li>Built rapid prototypes to validate new gameplay and learning features before full-scale development.</li>
+                  <li>Tested feasibility of next-gen mechanics across multiple target platforms.</li>
+                </ul>
+              </div>
+              <div class="proj-meta">
+                <div class="viewport-thumb viewport-image">
+                  <span class="corner tl"></span><span class="corner br"></span>
+                  <span class="rec-badge static"><span class="rec-dot static"></span>SCREEN</span>
+                  <img src="media/ignite.jpg" alt="Ignite by Hatch character art — astronaut, whale, child with rainbow glasses, rabbit gardener, and child in submarine vehicle" loading="lazy">
+                </div>
+                <div class="meta-block">
+                  <span class="field-label">Tech Stack</span>
+                  <div class="tech-tags">
+                    <span class="chip">Unity</span><span class="chip">C#</span><span class="chip">Prototyping</span>
+                  </div>
+                </div>
+                <div class="meta-block">
+                  <span class="field-label">Scale</span>
+                  <div class="field-val">Global learner base</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- EXPERIENCE -->
+      <section id="experience">
+        <div class="section-tag">Experience.log</div>
+        <div class="timeline reveal">
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="role">Unity Developer</div>
+            <div class="org">Ciklum India Private Limited · June 2022 – July 2025</div>
+            <ul>
+              <li>Built an e-learning app in Unity for 500+ students with smooth, intuitive UI flows.</li>
+              <li>Developed 2D and AR educational games using C# and AR Foundation.</li>
+              <li>Wrote efficient, reusable code that improved feature development speed by 20%.</li>
+              <li>Delivered a high-performance app optimized for Android devices.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACHIEVEMENTS -->
+      <section id="achievements">
+        <div class="section-tag">Achievements.json</div>
+        <div class="ach-grid">
+          <div class="ach-card reveal">
+            <div class="ach-icon">★</div>
+            <div><h4>Star Award of the Quarter</h4><p>Recognized for exceptional dedication, passion, and hard work.</p></div>
+          </div>
+          <div class="ach-card reveal">
+            <div class="ach-icon">▣</div>
+            <div><h4>Team of the Quarter — Q3 2024</h4><p>Honored for outstanding performance and collaboration.</p></div>
+          </div>
+          <div class="ach-card reveal">
+            <div class="ach-icon">①</div>
+            <div><h4>1st Rank — Kenny Game Jam</h4><p>Placed first in a competitive, time-boxed game development jam.</p></div>
+          </div>
+          <div class="ach-card reveal">
+            <div class="ach-icon">✓</div>
+            <div><h4>Certifications</h4><p>Unity Essentials, Junior Programming, C# Unity Game Developer, and Augmented Reality.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact" class="contact-section">
+        <div class="section-tag">Contact.cs</div>
+        <div class="contact-card reveal">
+          <div>
+            <h2>Let's build something interactive.</h2>
+            <p>Open to Unity development roles and freelance projects — 2D, 3D, or AR. Reach out and let's talk.</p>
+          </div>
+          <div class="contact-actions">
+            <a class="btn btn-primary" href="mailto:kamakshiprabhu24@gmail.com">Email Me ▸</a>
+            <a class="btn btn-ghost" href="tel:+918806350147">Call: 88063 50147</a>
+            <a class="btn btn-ghost" href="https://www.linkedin.com/in/kamakshiprabhu/" target="_blank" rel="noopener">LinkedIn ↗</a>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span>© 2026 Kamakshi Prabhuajgaonkar — Built in a non-Unity engine, for once.</span>
+        <span>Compiled without errors · 0 warnings</span>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // Reveal on scroll — safe by default: elements are visible unless JS confirms
+  // it's safe to animate them in (i.e. they start below the viewport).
+  const revealEls = document.querySelectorAll('.reveal');
+  revealEls.forEach(el=>{
+    const rect = el.getBoundingClientRect();
+    if(rect.top > window.innerHeight){
+      el.classList.add('pre-anim');
+    }
+  });
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.remove('pre-anim'); io.unobserve(e.target); }
+    });
+  }, {threshold:0.05});
+  revealEls.forEach(el=>{
+    if(el.classList.contains('pre-anim')) io.observe(el);
+  });
+  // Failsafe: guarantee everything is visible after load regardless of observer behavior
+  window.addEventListener('load', ()=>{
+    setTimeout(()=>{ revealEls.forEach(el=>el.classList.remove('pre-anim')); }, 2500);
+  });
+
+  // Active hierarchy node on scroll
+  const navLinks = document.querySelectorAll('.hnode');
+  const sections = ['hero','about','projects','experience','achievements','contact'].map(id=>document.getElementById(id));
+  const navMap = {};
+  navLinks.forEach(l=>{ navMap[l.getAttribute('href').slice(1)] = l; });
+
+  const sIo = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        navLinks.forEach(l=>l.classList.remove('is-active'));
+        const link = navMap[entry.target.id];
+        if(link) link.classList.add('is-active');
+      }
+    });
+  }, {threshold:0.4});
+  sections.forEach(s=>{ if(s) sIo.observe(s); });
+
+  // Gizmo parallax on mouse move (desktop only, respects reduced motion)
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cubeGroup = document.getElementById('cubeGroup');
+  const heroSection = document.getElementById('hero');
+  if(!reduceMotion && cubeGroup && heroSection){
+    heroSection.addEventListener('mousemove', (e)=>{
+      const rect = heroSection.getBoundingClientRect();
+      const x = (e.clientX - rect.left)/rect.width - 0.5;
+      const y = (e.clientY - rect.top)/rect.height - 0.5;
+      cubeGroup.style.transform = `rotate(${x*6}deg) translate(${x*8}px, ${y*8}px)`;
+    });
+    heroSection.addEventListener('mouseleave', ()=>{
+      cubeGroup.style.transform = 'none';
+    });
+  // Video preview controls (play/pause)
+  function wireVideoToggle(toggleId, videoIds, viewportId){
+    const toggle = document.getElementById(toggleId);
+    const viewport = document.getElementById(viewportId);
+    if(!toggle || !viewport) return;
+    const getActiveVideo = ()=> viewport.querySelector('.proj-video.is-active');
+
+    function play(){
+      const v = getActiveVideo();
+      if(!v) return;
+      v.play();
+      toggle.classList.add('is-playing');
+    }
+    function pause(){
+      videoIds.forEach(id=>{
+        const v = document.getElementById(id);
+        if(v) v.pause();
+      });
+      toggle.classList.remove('is-playing');
+    }
+    toggle.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(toggle.classList.contains('is-playing')) pause(); else play();
+    });
+    viewport.addEventListener('click', ()=>{
+      if(toggle.classList.contains('is-playing')) pause(); else play();
+    });
+    // pause when scrolled out of view
+    const vIo = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(!entry.isIntersecting) pause();
+      });
+    }, {threshold:0.2});
+    vIo.observe(viewport);
+  }
+
+  wireVideoToggle('sukPlayToggle', ['sukVid0','sukVid1'], 'sukViewport');
+  wireVideoToggle('gracePlayToggle', ['graceVid'], 'graceViewport');
+
+  // SUK clip switcher
+  const clipBtns = document.querySelectorAll('.clip-btn');
+  clipBtns.forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const targetId = btn.getAttribute('data-target');
+      const siblingId = btn.getAttribute('data-sibling');
+      const target = document.getElementById(targetId);
+      const sibling = document.getElementById(siblingId);
+      const wasPlaying = !sibling.paused;
+      sibling.pause();
+      sibling.classList.remove('is-active');
+      target.classList.add('is-active');
+      if(wasPlaying){ target.currentTime = 0; target.play(); }
+      clipBtns.forEach(b=>b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+    });
+  });
+</script>
+
+</body>
+</html>
