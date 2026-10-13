@@ -176,14 +176,14 @@
   /* Portrait or phone-recorded videos: show the whole frame instead of cropping it */
   .media.portrait { background: var(--ink); }
   .media.portrait video { object-fit: contain; background: var(--ink); }
-  /* Video file is stored sideways: turn it 90 degrees clockwise. The element is made
+  /* Video file is stored sideways: turn it 90 degrees counter-clockwise. The element is made
      as wide as the box is tall (and vice versa) so the turned video fills the box. */
-  .media.rot-cw { container-type: size; background: var(--ink); }
-  .media.rot-cw video {
+  .media.rot-ccw { container-type: size; background: var(--ink); }
+  .media.rot-ccw video {
     inset: auto;
     top: 50%; left: 50%;
     width: 100cqh; height: 100cqw;
-    transform: translate(-50%, -50%) rotate(90deg);
+    transform: translate(-50%, -50%) rotate(-90deg);
     object-fit: contain;
     background: var(--ink);
   }
@@ -313,7 +313,7 @@
       </article>
 
       <article class="project">
-        <div class="media portrait rot-cw">
+        <div class="media portrait rot-ccw">
           <div class="ph">Grace Digital Learning</div>
           <video autoplay muted loop playsinline preload="auto" aria-label="Demo of Grace Digital Learning">
             <source src="media/grace.mp4" type="video/mp4">
@@ -477,6 +477,18 @@
         if (checks > 12 || v.readyState >= 1) clearInterval(timer);
       }, 700);
     });
+    // Preview helper for the Grace video, so the angle can be checked on the live page
+    // without uploading again: add ?grace=90, ?grace=-90, ?grace=180 or ?grace=0 to the page address.
+    (function () {
+      var m = /[?&]grace=(-?\d+)/.exec(location.search);
+      var box = document.querySelector('.media.rot-ccw');
+      if (!m || !box) return;
+      var a = parseInt(m[1], 10), v = box.querySelector('video');
+      var sideways = Math.abs(a) % 180 === 90;
+      v.style.width = sideways ? '100cqh' : '100cqw';
+      v.style.height = sideways ? '100cqw' : '100cqh';
+      v.style.transform = 'translate(-50%, -50%) rotate(' + a + 'deg)';
+    })();
     document.querySelectorAll('.media img').forEach(function (img) {
       var base = img.getAttribute('src').split('?')[0];
       retry(img, function () { return base; }, function (u) { img.src = u; });
