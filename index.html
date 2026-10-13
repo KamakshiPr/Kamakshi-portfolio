@@ -167,10 +167,15 @@
   }
   .media .ph {
     position: absolute; inset: 0;
-    display: grid; place-items: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
     font-family: var(--head); font-weight: 700;
     color: var(--ink-soft);
     text-align: center; padding: 16px;
+  }
+  .ph-name { font-size: clamp(1.3rem, 3vw, 1.9rem); color: var(--ink); letter-spacing: -0.01em; }
+  .ph-note {
+    font-family: var(--body); font-weight: 600; font-size: 0.95rem;
+    background: var(--white); border: 2px solid var(--ink); border-radius: 999px; padding: 2px 12px;
   }
   .more { margin: 14px 0 0; font-size: 0.98rem; }
   /* Portrait or phone-recorded videos: show the whole frame instead of cropping it */
@@ -259,7 +264,7 @@
 
 <header class="bar">
   <div class="wrap">
-    <a class="mark" href="#top">Kamakshi P.</a>
+    <a class="mark" href="#top">Kamakshi Prabhu</a>
     <nav aria-label="Main">
       <ul>
         <li><a href="#work">Work</a></li>
@@ -344,10 +349,15 @@
 
       <article class="project">
         <div class="media">
-          <div class="ph">Gravity Swap: video coming soon</div>
+          <div class="ph">
+            <span class="ph-name">Gravity Swap</span>
+            <span class="ph-note">Gameplay video coming soon</span>
+          </div>
+          <!-- When the gameplay clip is ready, add media/gravity-swap.mp4 and put this back
+               inside the box above, after the placeholder:
           <video controls preload="metadata" playsinline aria-label="Gameplay of Gravity Swap">
             <source src="media/gravity-swap.mp4" type="video/mp4">
-          </video>
+          </video> -->
         </div>
         <div>
           <span class="status">In development</span>
@@ -474,7 +484,11 @@
       var timer = setInterval(function () {
         checks++;
         if (v.networkState === 3 || v.error) reload();
-        if (checks > 12 || v.readyState >= 1) clearInterval(timer);
+        if (checks > 12 || v.readyState >= 1) {
+          clearInterval(timer);
+          // Still no usable file after all retries: hide the player so the labelled placeholder shows.
+          if (v.readyState < 1 && (v.networkState === 3 || v.error)) v.style.display = 'none';
+        }
       }, 700);
     });
     // Preview helper for the Grace video, so the angle can be checked on the live page
