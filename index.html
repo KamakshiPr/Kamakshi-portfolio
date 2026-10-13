@@ -176,6 +176,17 @@
   /* Portrait or phone-recorded videos: show the whole frame instead of cropping it */
   .media.portrait { background: var(--ink); }
   .media.portrait video { object-fit: contain; background: var(--ink); }
+  /* Video file is stored sideways: turn it 90 degrees clockwise. The element is made
+     as wide as the box is tall (and vice versa) so the turned video fills the box. */
+  .media.rot-cw { container-type: size; background: var(--ink); }
+  .media.rot-cw video {
+    inset: auto;
+    top: 50%; left: 50%;
+    width: 100cqh; height: 100cqw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    object-fit: contain;
+    background: var(--ink);
+  }
   .media img,
   .media video {
     position: absolute; inset: 0;
@@ -302,9 +313,9 @@
       </article>
 
       <article class="project">
-        <div class="media portrait">
+        <div class="media portrait rot-cw">
           <div class="ph">Grace Digital Learning</div>
-          <video controls preload="metadata" playsinline aria-label="Demo of Grace Digital Learning">
+          <video autoplay muted loop playsinline preload="auto" aria-label="Demo of Grace Digital Learning">
             <source src="media/grace.mp4" type="video/mp4">
           </video>
         </div>
