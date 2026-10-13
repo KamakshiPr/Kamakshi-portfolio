@@ -173,12 +173,15 @@
     text-align: center; padding: 16px;
   }
   .more { margin: 14px 0 0; font-size: 0.98rem; }
+  /* Portrait or phone-recorded videos: show the whole frame instead of cropping it */
+  .media.portrait { background: var(--ink); }
+  .media.portrait video { object-fit: contain; background: var(--ink); }
   .media img,
   .media video {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    background: var(--ink);
+    background: transparent;
   }
   .meta { color: var(--ink-soft); font-size: 0.98rem; margin: 0 0 14px; }
   .project p { margin: 0 0 12px; max-width: 52ch; }
@@ -245,7 +248,7 @@
 
 <header class="bar">
   <div class="wrap">
-    <a class="mark" href="#top">Kamakshi Prabhu.</a>
+    <a class="mark" href="#top">Kamakshi P.</a>
     <nav aria-label="Main">
       <ul>
         <li><a href="#work">Work</a></li>
@@ -264,7 +267,7 @@
       <p class="lede">Unity developer in Pune with 3+ years of experience in 2D, 3D and AR. My apps have been used by 500+ students and global learners on Android, iOS, PC and WebGL.</p>
       <div class="actions">
         <a class="btn primary" href="#work">See my projects</a>
-        <a class="btn" href="media/Kamakshi-Prabhu-Resume.pdf">Download resume</a>
+        <a class="btn" href="Kamakshi-Prabhu-Resume.pdf">Download resume</a>
       </div>
 
       <div class="level" id="level" role="img" aria-label="A small yellow character that moves between floor and ceiling when gravity is flipped">
@@ -299,7 +302,7 @@
       </article>
 
       <article class="project">
-        <div class="media">
+        <div class="media portrait">
           <div class="ph">Grace Digital Learning</div>
           <video controls preload="metadata" playsinline aria-label="Demo of Grace Digital Learning">
             <source src="media/grace.mp4" type="video/mp4">
@@ -317,7 +320,7 @@
       <article class="project">
         <div class="media">
           <div class="ph">Ignite by Hatch</div>
-          <img src="media/ignite.jpg" alt="Character art from the Ignite by Hatch app: an astronaut, a whale, a child with rainbow glasses, a rabbit gardener and a child in a submarine" onerror="this.style.display='none'">
+          <img src="media/ignite.jpg" alt="Character art from the Ignite by Hatch app: an astronaut, a whale, a child with rainbow glasses, a rabbit gardener and a child in a submarine">
         </div>
         <div>
           <h3>Ignite by Hatch: gaming module</h3>
@@ -401,7 +404,7 @@
         <a class="btn primary" href="mailto:kamakshiprabhu24@gmail.com">Email me</a>
         <a class="btn" href="tel:+918806350147">Call</a>
         <a class="btn" href="https://www.linkedin.com/in/kamakshiprabhu/">LinkedIn</a>
-        <a class="btn" href="media/Kamakshi-Prabhu-Resume.pdf">Download resume</a>
+        <a class="btn" href="Kamakshi-Prabhu-Resume.pdf">Download resume</a>
       </div>
     </div>
   </section>
@@ -425,17 +428,47 @@
     level.addEventListener('click', toggle);
 
     // If a video file is missing, keep the labelled placeholder visible instead of a black box.
-    // The error can fire before this script runs, so also check the state once the page has loaded.
-    function hideIfMissing(v) {
-      if (v.networkState === 3) { v.style.display = 'none'; }
+    // Media that fails on the first load (slow network, GitHub Pages cache) is retried
+    // automatically with a fresh URL, so visitors never need a hard refresh.
+    var MAX_TRIES = 3;
+    function retry(el, getUrl, setUrl) {
+      var tries = 0;
+      el.addEventListener('error', function () {
+        if (tries >= MAX_TRIES) return;
+        tries++;
+        setTimeout(function () {
+          setUrl(getUrl() + (getUrl().indexOf('?') > -1 ? '&' : '?') + 'r=' + Date.now());
+        }, 800 * tries);
+      }, true);
     }
     document.querySelectorAll('.media video').forEach(function (v) {
-      var src = v.querySelector('source');
-      if (!src) return;
-      src.addEventListener('error', function () { v.style.display = 'none'; });
-      v.addEventListener('error', function () { v.style.display = 'none'; });
-      hideIfMissing(v);
-      window.addEventListener('load', function () { hideIfMissing(v); setTimeout(function () { hideIfMissing(v); }, 500); });
+      var s = v.querySelector('source');
+      if (!s) return;
+      var base = s.getAttribute('src').split('?')[0];
+      var tries = 0, pending = false;
+      function reload() {
+        if (pending || tries >= MAX_TRIES) return;
+        pending = true; tries++;
+        setTimeout(function () {
+          pending = false;
+          s.setAttribute('src', base + '?r=' + Date.now());
+          v.load();
+        }, 800 * tries);
+      }
+      // errors on <source> do not bubble, so listen on the source itself
+      s.addEventListener('error', reload);
+      // The error can happen before this script runs, so also check the state directly.
+      // networkState 3 means the browser found no usable file.
+      var checks = 0;
+      var timer = setInterval(function () {
+        checks++;
+        if (v.networkState === 3 || v.error) reload();
+        if (checks > 12 || v.readyState >= 1) clearInterval(timer);
+      }, 700);
+    });
+    document.querySelectorAll('.media img').forEach(function (img) {
+      var base = img.getAttribute('src').split('?')[0];
+      retry(img, function () { return base; }, function (u) { img.src = u; });
     });
   })();
 </script>
